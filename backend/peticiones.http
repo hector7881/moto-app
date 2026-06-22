@@ -1,0 +1,11 @@
+### Registro de usuario - pasajero
+POST http://localhost:3000/registro
+Content-Type: application/json
+
+{
+  "nombre": "Maria",
+  "email": "maria@test.com",
+  "password": "123456",
+  "telefono": "55598765",
+  "rol": "conductor"
+}
