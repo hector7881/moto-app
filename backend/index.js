@@ -1,26 +1,56 @@
-// Importamos la librería Express, que ya instalamos con npm install express
-// "require" es la forma de traer código de otro archivo/librería en CommonJS
+// Cargamos las variables del .env (necesitamos DATABASE_URL)
+require('dotenv').config();
+
+// Importamos Express, ya instalado con npm install express
 const express = require('express');
 
-// Creamos una instancia de la aplicación Express
-// "app" es nuestro servidor: a partir de acá le vamos a agregar rutas, middlewares, etc.
+// Importamos bcrypt para hashear contraseñas
+const bcrypt = require('bcrypt');
+
+// Importamos Pool para conectar con la base de datos
+const { Pool } = require('pg');
+
+// Creamos la instancia de la aplicación Express
 const app = express();
 
-// Definimos en qué puerto va a escuchar el servidor
-// Un puerto es como un "canal" en la misma computadora donde una app escucha conexiones
+// Puerto donde el servidor va a escuchar conexiones
 const PORT = 3000;
 
-// Definimos una ruta: cuando alguien visite "/" (la raíz del sitio) con método GET,
-// se ejecuta esta función
+// Conexión a la base de datos, usando la URL guardada en .env
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+// Middleware: le permite a Express entender JSON en el body de las peticiones
+app.use(express.json());
+
+// Ruta de prueba: responde cuando alguien visita "/" con método GET
 app.get('/', (req, res) => {
-  // req = "request" (lo que el cliente/navegador pidió)
-  // res = "response" (lo que nosotros respondemos)
-  // res.send() manda una respuesta de texto al navegador
   res.send('¡Funciona! Mi primer servidor con Express 🏍️');
 });
 
-// Le decimos al servidor que empiece a escuchar conexiones en el puerto definido
-// El segundo argumento es una función que se ejecuta una sola vez, cuando arranca
+// Endpoint de registro: crea un nuevo usuario
+app.post('/registro', async (req, res) => {
+  try {
+    const { nombre, email, password, telefono, rol } = req.body;
+
+    const password_hash = await bcrypt.hash(password, 10);
+
+    const resultado = await pool.query(
+      `INSERT INTO usuarios (nombre, email, password_hash, telefono, rol)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, nombre, email, rol`,
+      [nombre, email, password_hash, telefono, rol]
+    );
+
+    res.status(201).json(resultado.rows[0]);
+  } catch (error) {
+    console.log('Error en registro:', error.message);
+    res.status(500).json({ error: 'No se pudo registrar el usuario' });
+  }
+});
+
+// Arranca el servidor en el puerto definido
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
