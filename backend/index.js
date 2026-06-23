@@ -54,3 +54,50 @@ app.post('/registro', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
+
+
+// Import nuevo, junto a los otros require de arriba del archivo
+const jwt = require('jsonwebtoken');
+
+// Endpoint de login
+app.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Buscamos al usuario por su email
+    const resultado = await pool.query(
+      'SELECT * FROM usuarios WHERE email = $1',
+      [email]
+    );
+
+    // Si no se encontró ninguna fila, el usuario no existe
+    if (resultado.rows.length === 0) {
+      return res.status(401).json({ error: 'Email o contraseña incorrectos' });
+    }
+
+    const usuario = resultado.rows[0];
+
+    // Comparamos la contraseña que mandaron con el hash guardado
+    // bcrypt.compare hashea la contraseña recibida y la compara con el hash existente
+    const passwordValida = await bcrypt.compare(password, usuario.password_hash);
+
+    if (!passwordValida) {
+      return res.status(401).json({ error: 'Email o contraseña incorrectos' });
+    }
+
+    // Si llegamos acá, las credenciales son correctas: generamos el token
+    const token = jwt.sign(
+      { id: usuario.id, rol: usuario.rol }, // datos que viajan dentro del token
+      process.env.JWT_SECRET,                // la clave secreta para firmarlo
+      { expiresIn: '7d' }                     // el token expira en 7 días
+    );
+
+    res.json({
+      token,
+      usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol }
+    });
+  } catch (error) {
+    console.log('Error en login:', error.message);
+    res.status(500).json({ error: 'No se pudo iniciar sesión' });
+  }
+});
