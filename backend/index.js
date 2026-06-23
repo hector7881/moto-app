@@ -101,3 +101,14 @@ app.post('/login', async (req, res) => {
     res.status(500).json({ error: 'No se pudo iniciar sesión' });
   }
 });
+
+
+// Import nuevo arriba del archivo, junto a los demás require
+const verificarToken = require('./middleware/auth');
+
+// Ruta de prueba protegida: solo accesible con un token válido
+app.get('/perfil', verificarToken, (req, res) => {
+  // Si llegamos hasta acá, el middleware ya verificó el token
+  // req.usuario tiene los datos que guardamos en el JWT (id, rol)
+  res.json({ mensaje: 'Acceso autorizado', usuario: req.usuario });
+});

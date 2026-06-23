@@ -9,3 +9,21 @@ Content-Type: application/json
   "telefono": "55598765",
   "rol": "conductor"
 }
+
+
+### Login
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "hector@test.com",
+  "password": "123456"
+}
+
+
+### Perfil (ruta protegida) - SIN token, debería fallar
+GET http://localhost:3000/perfil
+
+### Perfil (ruta protegida) - CON token, debería funcionar
+GET http://localhost:3000/perfil
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sIjoicGFzYWplcm8iLCJpYXQiOjE3ODIxODgwMzEsImV4cCI6MTc4Mjc5MjgzMX0.8YwUx2Vwc5X0aNxR67SWDo2diE2EXenNFjNPnzvAyVE
